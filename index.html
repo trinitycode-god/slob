@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SLOB CONTROL</title>
+<meta name="description" content="Controle, análise e resultados dos itens SLOB.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,6 88,24 50,42 12,24" fill="#F58220"/>
+        <polygon points="12,24 50,42 50,88 12,70" fill="#FFFFFF" opacity="0.92"/>
+        <polygon points="88,24 50,42 50,88 88,70" fill="#A9A9A2"/>
+        <path d="M20 78 A38 38 0 0 0 82 60" fill="none" stroke="#F58220" stroke-width="6" stroke-linecap="round"/>
+        <polygon points="86,52 96,62 78,66" fill="#F58220"/>
+      </svg>
+      <div class="sidebar__brand-text">
+        <strong>SLOB<span>CONTROL</span></strong>
+      </div>
+    </div>
+
+    <nav class="sidebar__nav" id="navMenu">
+      <button class="nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-view="atualizar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+        Atualizar SLOB
+      </button>
+      <button class="nav-item" data-view="banco">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+        Banco de Dados
+      </button>
+      <button class="nav-item" data-view="historico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        Histórico
+      </button>
+      <button class="nav-item" data-view="destino">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>
+        Destino
+      </button>
+    </nav>
+
+    <div class="sidebar__footer">CONTROLE • ANÁLISE • RESULTADOS</div>
+  </aside>
+
+  <!-- ============ CONTEÚDO ============ -->
+  <div class="main">
+
+    <header class="topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div>
+          <div class="topbar__title" id="tituloPagina">Dashboard</div>
+          <div class="topbar__sub" id="subtituloPagina">Posição atual dos itens SLOB</div>
+        </div>
+      </div>
+      <button class="btn btn--secundario btn--pequeno" id="btnAtualizarDados">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+        Atualizar dados
+      </button>
+    </header>
+
+    <main class="content">
+
+      <!-- ---------- DASHBOARD ---------- -->
+      <section class="view active" id="view-dashboard">
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div>
+            <div>
+              <p class="card__label">Itens no SLOB</p>
+              <p class="card__value" id="cardItensSlob">—</p>
+            </div>
+          </div>
+          <div class="card card--destaque">
+            <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div>
+              <p class="card__label">Valor total parado</p>
+              <p class="card__value" id="cardValorParado">—</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div>
+            <div>
+              <p class="card__label" id="cardLimiteLabel">Itens &gt; 18 meses</p>
+              <p class="card__value" id="cardItensLimite">—</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.6 6.6L22 9l-5.4 4.5L18 21l-6-3.6L6 21l1.4-7.5L2 9l7.4-.4z"/></svg></div>
+            <div>
+              <p class="card__label">Maior valor parado</p>
+              <p class="card__value" id="cardMaiorValor" style="font-size:14px;">—</p>
+              <small id="cardMaiorValorNum" style="color:var(--laranja); font-weight:800; font-size:13px;"></small>
+            </div>
+          </div>
+        </div>
+
+        <div class="panels-grid">
+          <div class="panel">
+            <p class="panel__title">SLOB por faixa de tempo</p>
+            <div class="panel__chart"><canvas id="chartFaixaQtd"></canvas></div>
+          </div>
+          <div class="panel">
+            <p class="panel__title">Valor parado por faixa</p>
+            <div class="panel__chart"><canvas id="chartFaixaValor"></canvas></div>
+          </div>
+          <div class="panel">
+            <p class="panel__title">SLOB por armazém</p>
+            <div class="panel__chart"><canvas id="chartArmazemQtd"></canvas></div>
+          </div>
+          <div class="panel">
+            <p class="panel__title">Valor parado por armazém</p>
+            <div class="panel__chart"><canvas id="chartArmazemValor"></canvas></div>
+          </div>
+        </div>
+
+        <div class="panels-grid panels-grid--full">
+          <div class="panel">
+            <p class="panel__title">Top 10 itens por valor parado</p>
+            <div class="panel__chart panel__chart--tall"><canvas id="chartTop10"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- ATUALIZAR SLOB ---------- -->
+      <section class="view" id="view-atualizar">
+        <div class="dropzone" id="dropzone">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+          <h3>Arraste o arquivo aqui</h3>
+          <p>Planilha mensal do SLOB — formatos aceitos: .xlsx, .xls, .csv</p>
+          <button class="btn" id="btnSelecionarArquivo">Selecionar arquivo</button>
+          <input type="file" id="inputArquivo" accept=".xlsx,.xls,.csv">
+        </div>
+
+        <div id="areaPreImportacao" style="display:none; margin-top:22px;">
+          <div class="toolbar">
+            <div class="toolbar__esquerda">
+              <strong id="nomeArquivoSelecionado" style="font-size:13px;"></strong>
+              <span class="badge badge--cinza" id="qtdLinhasArquivo"></span>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn btn--secundario btn--pequeno" id="btnCancelarImportacao">Cancelar</button>
+              <button class="btn btn--pequeno" id="btnConfirmarImportacao">Confirmar importação</button>
+            </div>
+          </div>
+          <div class="tabela-wrap">
+            <table id="tabelaPreview"><thead></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <div id="areaResultadoImportacao" style="display:none;">
+          <h3 style="margin: 26px 0 4px;">Importação concluída</h3>
+          <p style="color:var(--cinza); margin:0 0 4px; font-size:13px;">Comparação feita com a posição anterior do Banco de Dados.</p>
+          <div class="resumo-importacao">
+            <div class="resumo-item mantidos"><strong id="resMantidos">0</strong><span>Itens mantidos</span></div>
+            <div class="resumo-item novos"><strong id="resNovos">0</strong><span>Itens novos</span></div>
+            <div class="resumo-item saidas"><strong id="resSaidas">0</strong><span>Saíram do SLOB</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- BANCO DE DADOS ---------- -->
+      <section class="view" id="view-banco">
+        <div class="toolbar">
+          <div class="toolbar__esquerda">
+            <input class="busca" type="text" id="buscaBanco" placeholder="Buscar por produto, descrição ou armazém...">
+            <select id="filtroArmazemBanco"><option value="">Todos os armazéns</option></select>
+            <select id="filtroFaixaBanco"><option value="">Todas as faixas</option></select>
+          </div>
+          <span class="badge badge--laranja" id="totalBanco"></span>
+        </div>
+        <div class="tabela-wrap"><table id="tabelaBanco"><thead></thead><tbody></tbody></table></div>
+      </section>
+
+      <!-- ---------- HISTÓRICO ---------- -->
+      <section class="view" id="view-historico">
+        <div class="toolbar">
+          <div class="toolbar__esquerda">
+            <input class="busca" type="text" id="buscaHistorico" placeholder="Buscar por produto, descrição ou armazém...">
+            <select id="filtroDataHistorico"><option value="">Todas as atualizações</option></select>
+          </div>
+          <span class="badge badge--laranja" id="totalHistorico"></span>
+        </div>
+        <div class="tabela-wrap"><table id="tabelaHistorico"><thead></thead><tbody></tbody></table></div>
+      </section>
+
+      <!-- ---------- DESTINO ---------- -->
+      <section class="view" id="view-destino">
+        <div class="toolbar">
+          <div class="toolbar__esquerda">
+            <input class="busca" type="text" id="buscaDestino" placeholder="Buscar por produto, descrição ou armazém...">
+            <select id="filtroStatusDestino">
+              <option value="">Todos os status</option>
+              <option value="Pendente">Pendente</option>
+              <option value="Definido">Definido</option>
+              <option value="Concluído">Concluído</option>
+            </select>
+          </div>
+          <span class="badge badge--laranja" id="totalDestino"></span>
+        </div>
+        <div class="tabela-wrap"><table id="tabelaDestino"><thead></thead><tbody></tbody></table></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
