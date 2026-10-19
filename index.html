@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CONTROLE SLOB</title>
+<style>
+:root{--or:#F58220;--bk:#1A1A1A;--gr:#6D6D6D;--bg:#F4F4F2;--ok:#2E9D5B;--wa:#E8A100;--rd:#D32F2F;--ln:#E2E2DE}
+*{box-sizing:border-box}body{margin:0;font:14px/1.4 system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--bk)}
+.app{display:flex;min-height:100vh}nav{width:210px;background:var(--bk);color:#fff;padding:12px 0;flex-shrink:0}
+nav h1{font-size:16px;margin:4px 16px 14px;color:var(--or)}nav a{display:block;padding:9px 16px;color:#ddd;cursor:pointer;font-size:13px}
+nav a.on,nav a:hover{background:#333;color:#fff;border-left:4px solid var(--or);padding-left:12px}
+main{flex:1;padding:18px;min-width:0}h2{margin:0 0 12px}
+.card{background:#fff;border:1px solid var(--ln);border-radius:8px;padding:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:12px}
+.k{font-size:12px;color:var(--gr)}.v{font-size:20px;font-weight:700}.s{font-size:12px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}
+input,select,button{font:inherit;padding:7px 9px;border:1px solid #ccc;border-radius:6px;background:#fff}
+button{cursor:pointer}button.p{background:var(--or);border-color:var(--or);color:#fff;font-weight:600}
+button.d{background:var(--rd);border-color:var(--rd);color:#fff}button:disabled{opacity:.5;cursor:wait}
+.tw{overflow:auto;border:1px solid var(--ln);border-radius:8px;background:#fff;max-height:62vh}
+table{border-collapse:collapse;width:100%}th,td{padding:6px 8px;border-bottom:1px solid var(--ln);text-align:left;white-space:nowrap;font-size:12px}
+th{background:#fafaf8;position:sticky;top:0;cursor:pointer}tr.r:hover{background:#fff4e8;cursor:pointer}
+.n{text-align:right}.tag{padding:2px 7px;border-radius:10px;color:#fff;font-size:11px;white-space:nowrap}
+.APROVADO{background:var(--ok)}.EM_REVALIDACAO{background:var(--wa)}.OBSOLETO,.DESCARTE{background:var(--rd)}.PENDENTE{background:var(--gr)}
+.bar{height:8px;background:var(--or);border-radius:4px}.warn{color:#9a5b00}.err{color:var(--rd)}
+.md{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:12px;z-index:9}
+.mb{background:#fff;border-radius:10px;padding:16px;max-width:760px;width:100%;max-height:92vh;overflow:auto}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 14px;margin:10px 0}.f b{display:block;font-size:11px;color:var(--gr)}
+#toast{position:fixed;right:14px;bottom:14px;z-index:20;display:flex;flex-direction:column;gap:6px}
+#toast div{padding:10px 14px;border-radius:8px;color:#fff;max-width:340px}
+#pa{display:none}
+@media(max-width:760px){.app{flex-direction:column}nav{width:100%;display:flex;overflow:auto}nav h1{display:none}nav a{white-space:nowrap}}
+@media print{@page{size:A4 portrait;margin:12mm 10mm 16mm;@bottom-center{content:"CONTROLE SLOB · Página " counter(page) " de " counter(pages);font-size:8pt}}
+.app,#toast,.md{display:none!important}#pa{display:block}body{background:#fff}
+#pa h1{font-size:15pt;margin:0}#pa .m{font-size:8pt;color:#333;margin:2px 0 6px}
+#pa table{width:100%;font-size:7pt}#pa th,#pa td{padding:2px 3px;white-space:normal;word-break:break-word;border:1px solid #bbb;position:static}
+#pa thead{display:table-header-group}#pa tr,#pa .it{page-break-inside:avoid}#pa th{background:#eee}
+#pa .it{border:1px solid #999;margin:0 0 5px;padding:3px 5px;font-size:7.5pt}#pa .it div{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}
+#pa .tot{margin-top:6px;font-weight:700;font-size:9pt;text-align:right}}
+</style>
+</head>
+<body>
+<div class="app"><nav id="nav"></nav><main id="main"><p>Carregando...</p></main></div>
+<div id="toast"></div><div id="pa"></div>
+<script>
+/* ===== CONFIGURAÇÃO ÚNICA DA API ===== */
+const API_URL='https://script.google.com/macros/s/AKfycbz8ZrDgGJ-pN42Cg7i6gB8WH_QLXmHrj4XOXhg7iiCtqy6CKgk75d1WjB_MyPXBXOKT/exec';
+const AC={APROVADO:'01 - APROVADO',EM_REVALIDACAO:'02 - EM REVALIDAÇÃO',OBSOLETO:'03 - OBSOLETO',DESCARTE:'04 - DESCARTE'};
+const F=['ID','Produto','Descrição','Armazem','Saldo Atual','C Unitario','Custo Total','Data Ult Mov','Dias sem Movimentação','Meses sem Movimentação','Classificação','Faixa Tempo Parado','Engenharia (Químico / Spark)','Ação'];
+const NUM=['Saldo Atual','C Unitario','Custo Total','Dias sem Movimentação','Meses sem Movimentação'];
+const VIEWS=[['dashboard','Dashboard'],['BANCO_DADOS','BANCO_DADOS'],['APROVADO','APROVADO'],['EM_REVALIDACAO','EM_REVALIDACAO'],['OBSOLETO','OBSOLETO'],['DESCARTE','DESCARTE'],['relatorios','RELATÓRIOS'],['config','CONFIGURAÇÕES E CONEXÃO']];
+const S={items:[],dash:null,view:'dashboard',busy:false,sync:null,v:{},rep:{acao:'',arm:'',faixa:'',q:'',mode:'c'}};
+const $=s=>document.querySelector(s);
+const esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const brl=n=>(n==null?'—':Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}));
+const num=n=>n==null?'—':Number(n).toLocaleString('pt-BR');
+const dt=s=>/^\d{4}-\d\d-\d\d$/.test(s)?s.split('-').reverse().join('/'):(s||'');
+const cell=(f,v)=>f==='Data Ult Mov'?dt(v):f==='Custo Total'||f==='C Unitario'?brl(v):NUM.includes(f)?num(v):esc(v);
+const tag=i=>`<span class="tag ${i.chaveAcao}">${i.pendente?'PENDENTE':esc(i['Ação'])}</span>`;
+const sem=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function toast(m,t='ok'){const d=document.createElement('div');d.style.background=t==='ok'?'#2E9D5B':'#D32F2F';d.textContent=m;$('#toast').append(d);setTimeout(()=>d.remove(),t==='ok'?4000:9000)}
+
+/* ===== API ===== */
+const chk=j=>{if(!j.success)throw new Error(j.message||'Erro na API');return j};
+async function get(a,p={}){const u=new URL(API_URL);u.searchParams.set('action',a);for(const k in p)u.searchParams.set(k,p[k]);
+ let r;try{r=await fetch(u)}catch(e){throw new Error('Falha de conexão com a API. Verifique a URL, a implantação ("Qualquer pessoa") e a internet.')}
+ return chk(await r.json())}
+async function post(b){let r;try{r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(b)})}
+ catch(e){throw new Error('Falha de conexão. A gravação NÃO foi confirmada; atualize os dados antes de repetir.')}
+ return chk(await r.json())}
+async function guard(fn){if(S.busy)return;S.busy=true;document.body.style.cursor='wait';document.querySelectorAll('button').forEach(b=>b.disabled=true);
+ try{return await fn()}catch(e){toast(e.message,'er')}finally{S.busy=false;document.body.style.cursor='';document.querySelectorAll('button').forEach(b=>b.disabled=false)}}
+async function load(){return guard(async()=>{const[l,d]=await Promise.all([get('list'),get('dashboard')]);S.items=l.data.itens;S.dash=d.data;S.sync=d.data.ultimaSincronizacao;S.at=new Date();render()})}
+
+/* ===== TELAS ===== */
+function nav(){$('#nav').innerHTML='<h1>CONTROLE SLOB</h1>'+VIEWS.map(([k,n])=>`<a class="${S.view===k?'on':''}" onclick="go('${k}')">${n}</a>`).join('')}
+function go(v){S.view=v;render()}
+function render(){nav();const v=S.view;$('#main').innerHTML=v==='dashboard'?dash():v==='relatorios'?reps():v==='config'?conf():tbl(v);window.scrollTo(0,0)}
+function dash(){const d=S.dash;if(!d)return'<p>Sem dados.</p>';const c=d.classificacoes,mx=Math.max(1,...d.porFaixa.map(x=>x.quantidade));
+ const card=(t,o,k)=>`<div class="card"><div class="k">${t}</div><div class="v">${num(o.quantidade)}</div><div class="s">${brl(o.custoTotal)}${o.percentualQuantidade!=null?` · ${o.percentualQuantidade}% itens · ${o.percentualCusto}% valor`:''}</div></div>`;
+ const q=d.qualidadeBase;return`<h2>Dashboard</h2><div class="tools"><button class="p" onclick="load()">Atualizar</button><span class="s">Última sincronização: ${S.sync?new Date(S.sync).toLocaleString('pt-BR'):'—'} · Dados carregados em ${S.at.toLocaleString('pt-BR')}</span></div>
+ <div class="grid">${card('TOTAL DE ITENS',d.total)}${card('APROVADOS',c.APROVADO)}${card('EM REVALIDAÇÃO',c.EM_REVALIDACAO)}${card('OBSOLETOS',c.OBSOLETO)}${card('DESCARTE',c.DESCARTE)}${card('PENDENTES DE CLASSIFICAÇÃO',c.PENDENTE)}
+ <div class="card"><div class="k">DIVERGÊNCIA DE CUSTO (informado × calculado)</div><div class="v ${d.divergencias.quantidade?'warn':''}">${num(d.divergencias.quantidade)}</div><div class="s">Diferença somada: ${brl(d.divergencias.somaDiferenca)}</div></div></div>
+ ${q.idsDuplicados.length||q.linhasSemId?`<p class="warn">⚠ Qualidade da base: ${q.idsDuplicados.length} ID(s) duplicado(s) ignorado(s) (${esc(q.idsDuplicados.slice(0,5).map(x=>x.id).join(', '))}) e ${q.linhasSemId} linha(s) sem ID.</p>`:''}
+ <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(340px,1fr))"><div class="card"><b>Por armazém</b><table><tr><th>Armazém</th><th class="n">Itens</th><th class="n">Custo total</th></tr>${d.porArmazem.map(a=>`<tr><td>${esc(a.armazem)}</td><td class="n">${num(a.quantidade)}</td><td class="n">${brl(a.custoTotal)}</td></tr>`).join('')}</table></div>
+ <div class="card"><b>Por faixa de tempo parado</b><table>${d.porFaixa.map(a=>`<tr><td>${esc(a.faixa)}</td><td style="width:35%"><div class="bar" style="width:${a.quantidade/mx*100}%"></div></td><td class="n">${num(a.quantidade)}</td><td class="n">${brl(a.custoTotal)}</td></tr>`).join('')}</table></div></div>`}
+
+function st(v){return S.v[v]||(S.v[v]={q:'',arm:'',faixa:'',cls:'',acao:'',div:'',sort:'ID',dir:1,page:1})}
+function base(v){return v==='BANCO_DADOS'?S.items:S.items.filter(i=>i.chaveAcao===v)}
+function fil(v){const s=st(v),t=sem(s.q).split(' ').filter(Boolean);
+ return base(v).filter(i=>(!s.arm||i.Armazem===s.arm)&&(!s.faixa||i['Faixa Tempo Parado']===s.faixa)&&(!s.cls||i['Classificação']===s.cls)&&(!s.acao||i.chaveAcao===s.acao)&&(!s.div||i.divergencia)&&
+  (!t.length||t.every(x=>sem(i.ID+' '+i.Produto+' '+i['Descrição']).includes(x)))).sort((a,b)=>{let x=a[s.sort],y=b[s.sort];if(NUM.includes(s.sort))return((x??0)-(y??0))*s.dir;return String(x).localeCompare(String(y),'pt-BR',{numeric:true})*s.dir})}
+const opts=(a,f,sel)=>`<option value="">${f}</option>`+[...new Set(a)].filter(Boolean).sort().map(x=>`<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('');
+function tbl(v){const s=st(v),b=base(v),L=fil(v),P=50,pg=Math.max(1,Math.ceil(L.length/P));s.page=Math.min(s.page,pg);const R=L.slice((s.page-1)*P,s.page*P),tot=L.reduce((a,i)=>a+(i['Custo Total']||0),0);
+ return`<h2>${v}</h2><div class="tools"><input id="q" placeholder="Buscar ID, produto ou descrição" value="${esc(s.q)}" oninput="sq('${v}',this.value)" style="min-width:230px">
+ <select onchange="sf('${v}','arm',this.value)">${opts(b.map(i=>i.Armazem),'Armazém',s.arm)}</select><select onchange="sf('${v}','faixa',this.value)">${opts(b.map(i=>i['Faixa Tempo Parado']),'Faixa de tempo',s.faixa)}</select>
+ <select onchange="sf('${v}','cls',this.value)">${opts(b.map(i=>i['Classificação']),'Classificação',s.cls)}</select>
+ ${v==='BANCO_DADOS'?`<select onchange="sf('${v}','acao',this.value)"><option value="">Ação</option>${Object.keys(AC).map(k=>`<option value="${k}" ${s.acao===k?'selected':''}>${AC[k]}</option>`).join('')}<option value="PENDENTE" ${s.acao==='PENDENTE'?'selected':''}>PENDENTE</option></select>`:''}
+ <label class="s"><input type="checkbox" ${s.div?'checked':''} onchange="sf('${v}','div',this.checked)"> só divergências</label>
+ <button onclick="load()">Atualizar</button><button class="p" onclick="pdfView('${v}')">PDF</button>${v==='DESCARTE'?'<button class="d" onclick="addDesc()">ADICIONAR ITEM AO DESCARTE</button>':''}</div>
+ <p class="s"><b>${num(L.length)}</b> item(ns) filtrado(s) de ${num(b.length)} · Soma do custo total exibido: <b>${brl(tot)}</b></p>
+ <div class="tw"><table><thead><tr>${F.map(f=>`<th onclick="so('${v}','${f}')">${f}${s.sort===f?(s.dir>0?' ▲':' ▼'):''}</th>`).join('')}</tr></thead><tbody>${R.map(i=>`<tr class="r" onclick="det('${esc(i.ID).replace(/'/g,"\\'")}')">${F.map(f=>`<td class="${NUM.includes(f)?'n':''} ${f==='Custo Total'&&i.divergencia?'warn':''}">${f==='Ação'?tag(i):cell(f,i[f])}${f==='Custo Total'&&i.divergencia?' ⚠':''}</td>`).join('')}</tr>`).join('')||'<tr><td colspan="14">Nenhum item.</td></tr>'}</tbody></table></div>
+ <div class="tools" style="margin-top:8px"><button onclick="pp('${v}',-1)" ${s.page<=1?'disabled':''}>◀</button><span>Página ${s.page} de ${pg}</span><button onclick="pp('${v}',1)" ${s.page>=pg?'disabled':''}>▶</button></div>`}
+function sq(v,x){const s=st(v);s.q=x;s.page=1;const p=$('#q').selectionStart;render();const e=$('#q');e.focus();e.setSelectionRange(p,p)}
+function sf(v,k,x){const s=st(v);s[k]=x;s.page=1;render()}
+function so(v,f){const s=st(v);s.dir=s.sort===f?-s.dir:1;s.sort=f;render()}
+function pp(v,d){st(v).page+=d;render()}
+
+/* ===== DETALHE / ALTERAÇÃO DE AÇÃO ===== */
+const find=id=>S.items.find(i=>i.ID===id);
+function modal(h){closeM();const d=document.createElement('div');d.className='md';d.id='md';d.innerHTML='<div class="mb">'+h+'</div>';d.onclick=e=>{if(e.target===d)closeM()};document.body.append(d)}
+function closeM(){$('#md')?.remove()}
+const fields=i=>'<div class="f">'+F.map(f=>`<div><b>${f}</b>${f==='Ação'?tag(i):cell(f,i[f])}</div>`).join('')+`<div><b>Custo calculado (Saldo × C Unit.)</b>${brl(i.custoCalculado)}${i.divergencia?` <span class="warn">⚠ divergência de ${brl(i.diferencaCusto)}</span>`:''}</div></div>`;
+function det(id){const i=find(id);if(!i)return;modal(`<h3>Item ${esc(i.ID)}</h3>${fields(i)}<div class="tools"><select id="na">${Object.values(AC).map(a=>`<option ${a===i['Ação']?'selected':''}>${a}</option>`).join('')}</select><button class="p" onclick="chg('${esc(id).replace(/'/g,"\\'")}')">Alterar ação</button><button onclick="closeM()">Fechar</button></div>`)}
+function chg(id){const a=$('#na').value,i=find(id);if(a===i['Ação'])return toast('A ação selecionada já é a atual.','er');
+ if(!confirm(`Confirma alterar o item ${id}\nde "${i['Ação']||'(vazia)'}"\npara "${a}"?`))return;
+ guard(async()=>{const r=await post(a===AC.DESCARTE?{action:'addToDescarte',id,confirmar:true}:{action:'updateAction',id,acao:a});
+  (r.data.avisos||[]).forEach(w=>toast(w,'er'));closeM();toast(r.message);await refresh()})}
+async function refresh(){const[l,d]=await Promise.all([get('list'),get('dashboard')]);S.items=l.data.itens;S.dash=d.data;S.sync=d.data.ultimaSincronizacao;S.at=new Date();render()}
+
+/* ===== ADICIONAR AO DESCARTE ===== */
+function addDesc(){modal(`<h3>Adicionar item ao DESCARTE</h3><input id="dq" placeholder="Pesquisar por ID, produto ou descrição" style="width:100%" oninput="dsr()"><div id="dr" class="s" style="margin-top:8px"></div>`);$('#dq').focus()}
+function dsr(){const t=sem($('#dq').value).split(' ').filter(Boolean);if(!t.length){$('#dr').innerHTML='';return}
+ const r=S.items.filter(i=>t.every(x=>sem(i.ID+' '+i.Produto+' '+i['Descrição']).includes(x))).slice(0,30);
+ $('#dr').innerHTML=r.length?`<table>${r.map(i=>`<tr class="r" onclick="dsel('${esc(i.ID).replace(/'/g,"\\'")}')"><td>${esc(i.ID)}</td><td>${esc(i.Produto)}</td><td>${esc(i['Descrição'])}</td><td>${tag(i)}</td></tr>`).join('')}</table>`:'Nenhum item encontrado.'}
+function dsel(id){const i=find(id);modal(`<h3>Confirmar descarte do item ${esc(id)}</h3>${fields(i)}<p class="err"><b>A ação será alterada para "04 - DESCARTE" na planilha.</b> O item permanece em BANCO_DADOS.</p><div class="tools"><button class="d" onclick="fdesc('${esc(id).replace(/'/g,"\\'")}')">Confirmar descarte</button><button onclick="addDesc()">Voltar</button></div>`)}
+function fdesc(id){if(find(id)['Ação']===AC.DESCARTE)return toast('Item já está em DESCARTE.','er');
+ guard(async()=>{const r=await post({action:'addToDescarte',id,confirmar:true});closeM();toast(r.message);await refresh()})}
+
+/* ===== RELATÓRIOS PDF (impressão A4 retrato) ===== */
+function reps(){const r=S.rep,L=repItems();return`<h2>RELATÓRIOS</h2><div class="card"><div class="tools"><select onchange="S.rep.acao=this.value;render()"><option value="">Todos os itens</option>${Object.keys(AC).map(k=>`<option value="${k}" ${r.acao===k?'selected':''}>${AC[k]}</option>`).join('')}<option value="PENDENTE" ${r.acao==='PENDENTE'?'selected':''}>PENDENTE</option></select>
+ <select onchange="S.rep.arm=this.value;render()">${opts(S.items.map(i=>i.Armazem),'Todos os armazéns',r.arm)}</select><select onchange="S.rep.faixa=this.value;render()">${opts(S.items.map(i=>i['Faixa Tempo Parado']),'Todas as faixas',r.faixa)}</select>
+ <input placeholder="Pesquisa (ID, produto, descrição)" value="${esc(r.q)}" onchange="S.rep.q=this.value;render()"></div>
+ <div class="tools"><label><input type="radio" name="m" ${r.mode==='c'?'checked':''} onchange="S.rep.mode='c'"> Compacto (9 colunas)</label><label><input type="radio" name="m" ${r.mode==='d'?'checked':''} onchange="S.rep.mode='d'"> Detalhado (14 campos)</label></div>
+ <p><b>${num(L.length)}</b> item(ns) · Custo total: <b>${brl(L.reduce((a,i)=>a+(i['Custo Total']||0),0))}</b></p><button class="p" onclick="pdf(repItems(),repTxt())">Gerar PDF / Imprimir</button>
+ <p class="s">Na janela de impressão escolha "Salvar como PDF" ou a impressora. Papel A4, retrato.</p></div>`}
+function repItems(){const r=S.rep,t=sem(r.q).split(' ').filter(Boolean);return S.items.filter(i=>(!r.acao||i.chaveAcao===r.acao)&&(!r.arm||i.Armazem===r.arm)&&(!r.faixa||i['Faixa Tempo Parado']===r.faixa)&&(!t.length||t.every(x=>sem(i.ID+' '+i.Produto+' '+i['Descrição']).includes(x))))}
+function repTxt(){const r=S.rep,p=[];p.push('Ação: '+(r.acao?(AC[r.acao]||r.acao):'todas'));if(r.arm)p.push('Armazém: '+r.arm);if(r.faixa)p.push('Faixa: '+r.faixa);if(r.q)p.push('Pesquisa: "'+r.q+'"');return p.join(' · ')}
+function pdfView(v){const s=st(v),p=[];p.push('Tela: '+v);if(s.arm)p.push('Armazém: '+s.arm);if(s.faixa)p.push('Faixa: '+s.faixa);if(s.cls)p.push('Classificação: '+s.cls);if(s.acao)p.push('Ação: '+s.acao);if(s.q)p.push('Pesquisa: "'+s.q+'"');if(s.div)p.push('Somente divergências');pdf(fil(v),p.join(' · '))}
+function pdf(L,filtros){if(!L.length)return toast('Nenhum item para o relatório.','er');const m=S.rep.mode,tot=L.reduce((a,i)=>a+(i['Custo Total']||0),0);
+ const head=`<h1>CONTROLE SLOB</h1><div class="m">Gerado em ${new Date().toLocaleString('pt-BR')} · ${esc(filtros)} · <b>${num(L.length)} item(ns)</b></div>`;
+ const C=['ID','Produto','Descrição','Armazem','Saldo Atual','C Unitario','Custo Total','Dias sem Movimentação','Ação'];
+ const body=m==='c'?`<table><thead><tr>${C.map(f=>`<th>${f.replace('Movimentação','Mov.')}</th>`).join('')}</tr></thead><tbody>${L.map(i=>`<tr>${C.map(f=>`<td style="${NUM.includes(f)?'text-align:right':''}">${cell(f,i[f])}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+  :L.map(i=>`<div class="it"><div>${F.map(f=>`<span><b>${f}:</b> ${cell(f,i[f])}</span>`).join('')}</div></div>`).join('');
+ $('#pa').innerHTML=head+body+`<div class="tot">SOMA GERAL DO CUSTO TOTAL: ${brl(tot)}</div>`;setTimeout(()=>window.print(),100)}
+window.onafterprint=()=>{$('#pa').innerHTML=''};
+
+/* ===== CONFIGURAÇÕES E CONEXÃO ===== */
+function conf(){return`<h2>CONFIGURAÇÕES E CONEXÃO</h2><div class="card"><p class="k">URL da API (editar somente no topo do script, constante API_URL)</p><p style="word-break:break-all">${esc(API_URL)}</p>
+ <div class="tools"><button class="p" onclick="cping()">Testar conexão</button><button onclick="cstat()">Conferir status e consistência</button><button onclick="csync()">Sincronizar abas</button><button onclick="chist()">Ver histórico</button></div><pre id="out" class="s" style="white-space:pre-wrap"></pre></div>`}
+const out=t=>{const o=$('#out');if(o)o.textContent=t};
+function cping(){guard(async()=>{const r=await get('ping');out(`✔ ${r.message}\nPlanilha: ${r.data.planilha}\nAbas: ${r.data.abasExistentes.join(', ')}\nLinhas em BANCO_DADOS: ${r.data.linhasBancoDados}`)})}
+function cstat(){guard(async()=>{const r=(await get('status')).data;out(`Itens únicos: ${r.base.itensUnicos} (linhas lidas: ${r.base.linhasLidas})\nPendentes: ${r.pendentes}\nIDs duplicados: ${r.base.idsDuplicados.length} · Sem ID: ${r.base.linhasSemId}\nConsistência: ${r.consistencia.ok?'OK ✔':'DIVERGENTE ✖'}\n`+r.consistencia.abas.map(a=>` ${a.aba}: esperado ${a.esperado}, encontrado ${a.encontrado} ${a.ok?'✔':'✖'}`).join('\n'))})}
+function csync(){if(!confirm('Sincronizar as 4 abas de classificação a partir de BANCO_DADOS?'))return;guard(async()=>{const r=await post({action:'sync'});out(r.message);toast(r.message);await refresh();out(r.message)})}
+function chist(){guard(async()=>{const r=(await get('history',{limit:50})).data.registros;out(r.length?r.map(h=>`${new Date(h.dataHora).toLocaleString('pt-BR')} | ${h.id} | ${h.acaoAnterior||'(vazia)'} → ${h.novaAcao} | ${h.operacao}`).join('\n'):'Sem registros.')})}
+
+load();
+</script>
+</body>
+</html>
